@@ -5,7 +5,7 @@ mod genpass;
 use clap::Parser;
 use std::path::Path;
 
-pub use self::{base64::Base64Subcommand, csv::OutputFormat};
+pub use self::{base64::Base64Format, base64::Base64Subcommand, csv::OutputFormat};
 
 use self::{csv::CsvOpts, genpass::GenPassOpts};
 

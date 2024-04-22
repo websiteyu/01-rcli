@@ -1,0 +1,8 @@
+{
+    "rust-analyzer.cargo.features": ["fmt"],
+    "rust-analyzer.checkOnSave.allTargets": true,
+    "rust-analyzer.rustfmt.overrideCommand": ["cargo", "fmt"],
+    "[rust]": {
+        "editor.formatOnSave": true
+    }
+}
