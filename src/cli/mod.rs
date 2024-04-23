@@ -1,11 +1,16 @@
 mod base64;
 mod csv;
 mod genpass;
+mod text;
 
 use clap::Parser;
 use std::path::Path;
 
-pub use self::{base64::Base64Format, base64::Base64Subcommand, csv::OutputFormat};
+pub use self::{
+    base64::{Base64Format, Base64Subcommand},
+    csv::OutputFormat,
+    text::{TextSignFormat, TextSubcommand},
+};
 
 use self::{csv::CsvOpts, genpass::GenPassOpts};
 
@@ -24,9 +29,11 @@ pub enum SubCommand {
     GenPass(GenPassOpts),
     #[command(subcommand)]
     Base64(Base64Subcommand),
+    #[command(subcommand)]
+    Text(TextSubcommand),
 }
 
-fn verify_input(input: &str) -> Result<String, &'static str> {
+fn verify_file(input: &str) -> Result<String, &'static str> {
     // if input is "-" or file exists
     if input == "-" || Path::new(input).exists() {
         Ok(input.into())
@@ -37,12 +44,12 @@ fn verify_input(input: &str) -> Result<String, &'static str> {
 
 #[cfg(test)]
 mod tests {
-    use crate::cli::verify_input;
+    use crate::cli::verify_file;
 
     #[test]
-    fn test_verify_input() {
-        assert_eq!(verify_input("-"), Ok("-".into()));
-        assert_eq!(verify_input("output.json"), Ok("output.json".into()));
-        assert_eq!(verify_input("no_output.json"), Err("File does not exist"));
+    fn test_verify_file() {
+        assert_eq!(verify_file("-"), Ok("-".into()));
+        assert_eq!(verify_file("output.json"), Ok("output.json".into()));
+        assert_eq!(verify_file("no_output.json"), Err("File does not exist"));
     }
 }
