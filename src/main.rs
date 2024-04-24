@@ -3,9 +3,9 @@ use std::fs;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use clap::Parser;
 use rcli::{
-    process_csv, process_decode, process_encode, process_generate_key, process_genpass,
-    process_text_sign, process_text_verify, Base64Subcommand, Opts, SubCommand, TextSignFormat,
-    TextSubcommand,
+    process_csv, process_decode, process_decrypt, process_encode, process_encrypt,
+    process_generate_key, process_genpass, process_text_sign, process_text_verify,
+    Base64Subcommand, Cha1305Subcommand, Opts, SubCommand, TextSignFormat, TextSubcommand,
 };
 use zxcvbn::zxcvbn;
 
@@ -31,7 +31,6 @@ fn main() -> anyhow::Result<()> {
                 opts.no_symbol,
             )?;
             println!("{}", password);
-
             let estimate = zxcvbn(&password, &[])?;
             eprintln!("Password strength: {}", estimate.score());
         }
@@ -74,7 +73,16 @@ fn main() -> anyhow::Result<()> {
                         fs::write(name.join("ed25519.pk"), &key[1])?;
                     }
                 }
-                println!("{:?}", key);
+            }
+        },
+        SubCommand::Cha1305(subcmd) => match subcmd {
+            Cha1305Subcommand::Encrypt(opts) => {
+                let encrypted = process_encrypt(&opts.input, &opts.key, &opts.nonce, opts.format)?;
+                println!("{}", encrypted);
+            }
+            Cha1305Subcommand::Decrypt(opts) => {
+                let decrypted = process_decrypt(&opts.input, &opts.key, &opts.nonce, opts.format)?;
+                println!("{}", String::from_utf8(decrypted)?);
             }
         },
     }

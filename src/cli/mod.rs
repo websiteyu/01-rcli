@@ -1,4 +1,5 @@
 mod base64;
+mod cha1305;
 mod csv;
 mod genpass;
 mod text;
@@ -8,6 +9,7 @@ use std::path::{Path, PathBuf};
 
 pub use self::{
     base64::{Base64Format, Base64Subcommand},
+    cha1305::Cha1305Subcommand,
     csv::OutputFormat,
     text::{TextSignFormat, TextSubcommand},
 };
@@ -31,9 +33,11 @@ pub enum SubCommand {
     Base64(Base64Subcommand),
     #[command(subcommand)]
     Text(TextSubcommand),
+    #[command(subcommand)]
+    Cha1305(Cha1305Subcommand),
 }
 
-fn verify_file(input: &str) -> Result<String, &'static str> {
+pub fn verify_file(input: &str) -> Result<String, &'static str> {
     // if input is "-" or file exists
     if input == "-" || Path::new(input).exists() {
         Ok(input.into())
@@ -42,14 +46,17 @@ fn verify_file(input: &str) -> Result<String, &'static str> {
     }
 }
 
-fn verify_path(path: &str) -> Result<PathBuf, &'static str> {
-    println!("path: {}", path);
+pub fn verify_path(path: &str) -> Result<PathBuf, &'static str> {
     let p = Path::new(path);
     if p.exists() && p.is_dir() {
         Ok(path.into())
     } else {
         Err("Path not exists or is not a directory")
     }
+}
+
+pub fn parse_base64_format(format: &str) -> Result<Base64Format, anyhow::Error> {
+    format.parse()
 }
 
 #[cfg(test)]

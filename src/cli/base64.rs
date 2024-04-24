@@ -1,7 +1,7 @@
 use core::fmt;
 use std::str::FromStr;
 
-use super::verify_file;
+use super::{parse_base64_format, verify_file};
 
 use clap::Parser;
 
@@ -33,10 +33,6 @@ pub struct Base64DecodeOpts {
 pub enum Base64Format {
     Standard,
     URLSafe,
-}
-
-fn parse_base64_format(format: &str) -> Result<Base64Format, anyhow::Error> {
-    format.parse()
 }
 
 impl FromStr for Base64Format {

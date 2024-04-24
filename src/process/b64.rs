@@ -13,9 +13,13 @@ pub fn process_encode(input: &str, format: Base64Format) -> Result<String> {
     let mut buf = Vec::new();
     reader.read_to_end(&mut buf)?;
 
+    process_generate_encode(buf, format)
+}
+
+pub fn process_generate_encode(input: Vec<u8>, format: Base64Format) -> Result<String> {
     let encoded = match format {
-        Base64Format::Standard => STANDARD.encode(&buf),
-        Base64Format::URLSafe => URL_SAFE_NO_PAD.encode(&buf),
+        Base64Format::Standard => STANDARD.encode(&input),
+        Base64Format::URLSafe => URL_SAFE_NO_PAD.encode(&input),
     };
     Ok(encoded)
 }
@@ -30,6 +34,14 @@ pub fn process_decode(input: &str, format: Base64Format) -> Result<Vec<u8>> {
         Base64Format::URLSafe => URL_SAFE_NO_PAD.decode(buf)?,
     };
     Ok(decoded)
+}
+
+pub fn process_generate_decode(input: Vec<u8>, format: Base64Format) -> Result<Vec<u8>> {
+    let decoded = match format {
+        Base64Format::Standard => STANDARD.decode(&input),
+        Base64Format::URLSafe => URL_SAFE_NO_PAD.decode(&input),
+    };
+    Ok(decoded?)
 }
 
 #[cfg(test)]
