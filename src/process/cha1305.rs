@@ -65,7 +65,6 @@ pub fn process_encrypt(
     nonce: &str,
     format: Base64Format,
 ) -> Result<String> {
-    // let nonce = fs::read(nonce)?;
     let buf = get_vec(input)?;
 
     let encryptor = Cha1305Processor::try_load(key, nonce)?;
@@ -79,10 +78,7 @@ pub fn process_decrypt(
     nonce: &str,
     format: Base64Format,
 ) -> Result<Vec<u8>> {
-    // let nonce = fs::read(nonce)?;
-    println!("process1");
     let input = process_decode(input, format)?;
-    println!("process2");
     let encryptor: Cha1305Processor = Cha1305Processor::try_load(key, nonce)?;
     let encrypted = encryptor.decrypt(input)?;
     Ok(encrypted)

@@ -49,12 +49,6 @@ async fn main() -> anyhow::Result<()> {
         },
         SubCommand::Text(subcmd) => match subcmd {
             TextSubcommand::Sign(opts) => {
-                // match opts.format {
-                //     TextSignFormat::Blake3 => {
-                //         process_text_sign(&opts.input, &opts.key, opts.format)?;
-                //     }
-                //     TextSignFormat::Ed25519 => todo!(),
-                // }
                 let sign = process_text_sign(&opts.input, &opts.key, opts.format)?;
                 println!("{}", URL_SAFE_NO_PAD.encode(sign));
             }
