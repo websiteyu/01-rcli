@@ -2,6 +2,7 @@ mod base64;
 mod cha1305;
 mod csv;
 mod genpass;
+mod http;
 mod text;
 
 use clap::Parser;
@@ -11,6 +12,7 @@ pub use self::{
     base64::{Base64Format, Base64Subcommand},
     cha1305::Cha1305Subcommand,
     csv::OutputFormat,
+    http::{HttpServeOpts, HttpSubcommand},
     text::{TextSignFormat, TextSubcommand},
 };
 
@@ -35,6 +37,8 @@ pub enum SubCommand {
     Text(TextSubcommand),
     #[command(subcommand)]
     Cha1305(Cha1305Subcommand),
+    #[command(subcommand)]
+    Http(HttpSubcommand),
 }
 
 pub fn verify_file(input: &str) -> Result<String, &'static str> {
