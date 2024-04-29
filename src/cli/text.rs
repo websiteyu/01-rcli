@@ -1,9 +1,13 @@
 use core::fmt;
 use std::{path::PathBuf, str::FromStr};
 
+use crate::{process_generate_key, process_text_sign, process_text_verify, CmdExcutor};
+
 use super::{verify_file, verify_path};
 use anyhow::{Ok, Result};
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use clap::Parser;
+use tokio::fs;
 
 #[derive(Debug, Parser)]
 pub enum TextSubcommand {
@@ -79,5 +83,49 @@ impl From<TextSignFormat> for &'static str {
 impl fmt::Display for TextSignFormat {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", Into::<&str>::into(*self))
+    }
+}
+
+impl CmdExcutor for TextSubcommand {
+    async fn execute(self) -> Result<()> {
+        match self {
+            TextSubcommand::Sign(opts) => opts.execute().await,
+            TextSubcommand::Verify(opts) => opts.execute().await,
+            TextSubcommand::Generate(opts) => opts.execute().await,
+        }
+    }
+}
+
+impl CmdExcutor for TextSignOpts {
+    async fn execute(self) -> Result<()> {
+        let sign = process_text_sign(&self.input, &self.key, self.format)?;
+        println!("{}", URL_SAFE_NO_PAD.encode(sign));
+        Ok(())
+    }
+}
+
+impl CmdExcutor for TextVerifyOpts {
+    async fn execute(self) -> Result<()> {
+        let verify = process_text_verify(&self.input, &self.key, self.format, &self.sig)?;
+        println!("{}", verify);
+        Ok(())
+    }
+}
+
+impl CmdExcutor for TextKeyGenerateOpts {
+    async fn execute(self) -> Result<()> {
+        let key = process_generate_key(&self.format)?;
+        match self.format {
+            TextSignFormat::Blake3 => {
+                let name = self.output.join("blake3.txt");
+                fs::write(name, &key[0]).await?;
+            }
+            TextSignFormat::Ed25519 => {
+                let name = &self.output;
+                fs::write(name.join("ed25519.sk"), &key[0]).await?;
+                fs::write(name.join("ed25519.pk"), &key[1]).await?;
+            }
+        }
+        Ok(())
     }
 }

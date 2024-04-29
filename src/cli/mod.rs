@@ -8,6 +8,8 @@ mod text;
 use clap::Parser;
 use std::path::{Path, PathBuf};
 
+use crate::CmdExcutor;
+
 pub use self::{
     base64::{Base64Format, Base64Subcommand},
     cha1305::Cha1305Subcommand,
@@ -31,14 +33,32 @@ pub enum SubCommand {
     Csv(CsvOpts),
     #[command(name = "genpass", about = "Generate a random password")]
     GenPass(GenPassOpts),
-    #[command(subcommand)]
+    #[command(subcommand, about = "Base64 encode/decode")]
     Base64(Base64Subcommand),
-    #[command(subcommand)]
+    #[command(subcommand, about = "Text sign/verify")]
     Text(TextSubcommand),
-    #[command(subcommand)]
+    #[command(subcommand, about = "Chacha20-poly1305 encrypt/decrypt")]
     Cha1305(Cha1305Subcommand),
-    #[command(subcommand)]
+    #[command(subcommand, about = "Http server")]
     Http(HttpSubcommand),
+}
+
+impl CmdExcutor for SubCommand {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            SubCommand::Csv(opts) => {
+                opts.execute().await?;
+            }
+            SubCommand::GenPass(opts) => {
+                opts.execute().await?;
+            }
+            SubCommand::Base64(cmd) => cmd.execute().await?,
+            SubCommand::Text(_) => todo!(),
+            SubCommand::Cha1305(_) => todo!(),
+            SubCommand::Http(_) => todo!(),
+        }
+        Ok(())
+    }
 }
 
 pub fn verify_file(input: &str) -> Result<String, &'static str> {

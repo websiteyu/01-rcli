@@ -5,6 +5,8 @@ mod cli;
 mod process;
 mod utils;
 
+use anyhow::Result;
+
 pub use cli::{
     Base64Subcommand, Cha1305Subcommand, HttpServeOpts, HttpSubcommand, Opts, SubCommand,
     TextSignFormat, TextSubcommand,
@@ -14,3 +16,8 @@ pub use process::{
     process_generate_decode, process_generate_encode, process_generate_key, process_genpass,
     process_http_serve, process_text_sign, process_text_verify,
 };
+
+#[allow(async_fn_in_trait)]
+pub trait CmdExcutor {
+    async fn execute(self) -> Result<()>;
+}
