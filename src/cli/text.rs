@@ -1,9 +1,12 @@
 use core::fmt;
 use std::{path::PathBuf, str::FromStr};
 
-use crate::{process_generate_key, process_text_sign, process_text_verify, CmdExcutor};
+use crate::{
+    process_decrypt, process_encrypt, process_generate_key, process_text_sign, process_text_verify,
+    CmdExcutor,
+};
 
-use super::{verify_file, verify_path};
+use super::{parse_base64_format, verify_file, verify_path, Base64Format};
 use anyhow::{Ok, Result};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use clap::Parser;
@@ -19,6 +22,10 @@ pub enum TextSubcommand {
     Verify(TextVerifyOpts),
     #[command(about = "Generate a new key")]
     Generate(TextKeyGenerateOpts),
+    #[command(about = "Encrypt message")]
+    Encrypt(Cha1305EncryptOpt),
+    #[command(about = "Decrypt message")]
+    Decrypt(Cha1305DecryptOpt),
 }
 
 #[derive(Debug, Parser)]
@@ -118,6 +125,53 @@ impl CmdExcutor for TextKeyGenerateOpts {
                 fs::write(name.join("ed25519.pk"), &key[1]).await?;
             }
         }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Parser)]
+#[enum_dispatch(CmdExcutor)]
+pub enum Cha1305Subcommand {
+    #[command(about = "Encrypt message")]
+    Encrypt(Cha1305EncryptOpt),
+    #[command(about = "Decrypt message")]
+    Decrypt(Cha1305DecryptOpt),
+}
+
+#[derive(Debug, Parser)]
+pub struct Cha1305EncryptOpt {
+    #[arg(short, long, value_parser = verify_file, default_value = "-")]
+    pub input: String,
+    #[arg(short, long, value_parser = verify_file)]
+    pub key: String,
+    #[arg(long, value_parser = parse_base64_format, default_value = "standard")]
+    pub format: Base64Format,
+}
+
+#[derive(Debug, Parser)]
+pub struct Cha1305DecryptOpt {
+    #[arg(short, long, value_parser = verify_file, default_value = "-")]
+    pub input: String,
+    #[arg(short, long, value_parser = verify_file)]
+    pub key: String,
+    #[arg(short, long)]
+    pub nonce: String,
+    #[arg(long, value_parser = parse_base64_format, default_value = "standard")]
+    pub format: Base64Format,
+}
+
+impl CmdExcutor for Cha1305EncryptOpt {
+    async fn execute(self) -> anyhow::Result<()> {
+        let encrypted = process_encrypt(&self.input, &self.key, self.format)?;
+        println!("{:?}", encrypted);
+        Ok(())
+    }
+}
+
+impl CmdExcutor for Cha1305DecryptOpt {
+    async fn execute(self) -> anyhow::Result<()> {
+        let decrypted = process_decrypt(&self.input, &self.key, &self.nonce, self.format)?;
+        println!("{}", String::from_utf8(decrypted)?);
         Ok(())
     }
 }

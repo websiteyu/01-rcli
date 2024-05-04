@@ -1,5 +1,4 @@
 mod base64;
-mod cha1305;
 mod csv;
 mod genpass;
 mod http;
@@ -12,12 +11,14 @@ use std::path::{Path, PathBuf};
 
 pub use self::{
     base64::{Base64DecodeOpts, Base64EncodeOpts, Base64Format, Base64Subcommand},
-    cha1305::{Cha1305DecryptOpt, Cha1305EncryptOpt, Cha1305Subcommand},
     csv::{CsvOpts, OutputFormat},
     genpass::GenPassOpts,
     http::{HttpServeOpts, HttpSubcommand},
     jwt::{JwtSignOpts, JwtSubcommand, JwtVerifyOpts},
-    text::{TextKeyGenerateOpts, TextSignFormat, TextSignOpts, TextSubcommand, TextVerifyOpts},
+    text::{
+        Cha1305DecryptOpt, Cha1305EncryptOpt, Cha1305Subcommand, TextKeyGenerateOpts,
+        TextSignFormat, TextSignOpts, TextSubcommand, TextVerifyOpts,
+    },
 };
 
 #[derive(Debug, Parser)]

@@ -13,13 +13,13 @@ pub fn process_encode(input: &str, format: Base64Format) -> Result<String> {
     let mut buf = Vec::new();
     reader.read_to_end(&mut buf)?;
 
-    process_generate_encode(buf, format)
+    process_generate_encode(&buf, format)
 }
 
-pub fn process_generate_encode(input: Vec<u8>, format: Base64Format) -> Result<String> {
+pub fn process_generate_encode(input: &Vec<u8>, format: Base64Format) -> Result<String> {
     let encoded = match format {
-        Base64Format::Standard => STANDARD.encode(&input),
-        Base64Format::URLSafe => URL_SAFE_NO_PAD.encode(&input),
+        Base64Format::Standard => STANDARD.encode(input),
+        Base64Format::URLSafe => URL_SAFE_NO_PAD.encode(input),
     };
     Ok(encoded)
 }

@@ -1,12 +1,18 @@
 use std::{fs, io::Read, path::Path};
 
-use crate::{cli::TextSignFormat, utils::get_reader};
+use crate::{
+    cli::{Base64Format, TextSignFormat},
+    process_decode, process_generate_encode,
+    utils::{get_reader, get_vec},
+};
 use anyhow::{Ok, Result};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use rand::rngs::OsRng;
 
-use super::gen_pass;
+use chacha20poly1305::{aead::Aead, ChaCha20Poly1305, Key, KeyInit, Nonce};
+
+use super::gen_pass::{self, genpass_length};
 
 trait TextSign {
     fn sign(&self, reader: &mut dyn Read) -> Result<Vec<u8>>;
@@ -21,11 +27,6 @@ trait KeyLoader {
     where
         T: AsRef<Path>,
         Self: Sized;
-    // ,
-    // {
-    //     let key = fs::read(&path)?;
-    //     Self::try_new(&key)
-    // }
 }
 
 trait KeyGenerator {
@@ -214,9 +215,111 @@ pub fn process_generate_key(format: &TextSignFormat) -> Result<Vec<Vec<u8>>> {
     }
 }
 
+pub trait Cha1305Encrypt {
+    fn encrypt(&self, input: Vec<u8>, format: Base64Format) -> Result<Cha1305Resp>;
+}
+
+pub trait Cha1305Decrypt {
+    fn decrypt(&self, input: Vec<u8>) -> Result<Vec<u8>>;
+}
+
+pub struct Cha1305Processor {
+    cipher: ChaCha20Poly1305,
+    nonce: Vec<u8>,
+}
+
+#[derive(Debug)]
+pub struct Cha1305Resp {
+    pub message: String,
+    pub nonce: String,
+}
+
+impl Cha1305Resp {
+    pub fn new(message: String, nonce: String) -> Self {
+        Self { message, nonce }
+    }
+}
+
+impl Cha1305Processor {
+    fn new(cipher: ChaCha20Poly1305, nonce: Vec<u8>) -> Self {
+        Self { cipher, nonce }
+    }
+
+    fn try_new(key: &[u8], nonce: Vec<u8>) -> Result<Self> {
+        let key = Key::from_slice(key);
+        Ok(Self::new(ChaCha20Poly1305::new(key), nonce))
+    }
+
+    fn try_load(key_path: &str) -> Result<Self> {
+        let key = fs::read(key_path)?;
+        if key.len() < 32 {
+            panic!("key must be 32 bytes");
+        }
+        let key = key[..32].to_vec();
+        let nonce = genpass_length(12)?;
+        Self::try_new(&key, nonce)
+    }
+
+    fn try_load_full(key_path: &str, nonce: &str) -> Result<Self> {
+        let key = fs::read(key_path)?;
+        if key.len() < 32 {
+            panic!("key must be 32 bytes");
+        }
+        let key = key[..32].to_vec();
+        Self::try_new(&key, nonce.as_bytes().to_vec())
+    }
+}
+impl Cha1305Encrypt for Cha1305Processor {
+    fn encrypt(&self, input: Vec<u8>, format: Base64Format) -> Result<Cha1305Resp> {
+        let input = self
+            .cipher
+            .encrypt(Nonce::from_slice(&self.nonce), input.as_ref())
+            .expect("encryption failure!");
+        Ok(Cha1305Resp::new(
+            process_generate_encode(&input, format)?,
+            process_generate_encode(&self.nonce, format)?,
+        ))
+    }
+}
+
+impl Cha1305Decrypt for Cha1305Processor {
+    fn decrypt(&self, input: Vec<u8>) -> Result<Vec<u8>> {
+        Ok(self
+            .cipher
+            .decrypt(Nonce::from_slice(&self.nonce), input.as_ref())
+            .expect("encryption failure!"))
+    }
+}
+
+pub fn process_encrypt(input: &str, key: &str, format: Base64Format) -> Result<Cha1305Resp> {
+    let buf = get_vec(input)?;
+
+    let encryptor = Cha1305Processor::try_load(key)?;
+    encryptor.encrypt(buf, format)
+}
+
+pub fn process_decrypt(
+    input: &str,
+    key: &str,
+    nonce: &str,
+    format: Base64Format,
+) -> Result<Vec<u8>> {
+    let input = process_decode(input, format)?;
+    let encryptor: Cha1305Processor = Cha1305Processor::try_load_full(key, nonce)?;
+    let encrypted = encryptor.decrypt(input)?;
+    Ok(encrypted)
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::process::text::{Ed25519Signer, Ed25519Verifier, TextVerify};
+    use crate::{
+        cli::Base64Format,
+        process::text::{
+            Cha1305Decrypt, Cha1305Encrypt, Cha1305Processor, Ed25519Signer, Ed25519Verifier,
+            TextVerify,
+        },
+        process_generate_decode,
+    };
 
     use super::{Blake3, KeyLoader, TextSign};
     use anyhow::Result;
@@ -238,6 +341,21 @@ mod tests {
         let sig = signer.sign(&mut &input[..])?;
         let verifier = Ed25519Verifier::load("fixtures/ed25519.pk")?;
         assert!(verifier.verify(&mut &input[..], &sig).is_ok());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_process_encrypt() -> Result<()> {
+        let processor = Cha1305Processor::try_load("./././/fixtures//cha1305-key.txt")?;
+        let input = b"hello world!";
+        let format = Base64Format::URLSafe;
+        let encrypted = processor.encrypt(input.as_ref().to_vec(), format)?;
+
+        let decode_decrypted =
+            process_generate_decode(encrypted.message.as_bytes().to_vec(), format)?;
+        let decrypted = processor.decrypt(decode_decrypted)?;
+        assert_eq!(decrypted, input);
 
         Ok(())
     }
