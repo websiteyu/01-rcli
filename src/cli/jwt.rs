@@ -41,6 +41,8 @@ impl CmdExcutor for JwtSignOpts {
 
 impl CmdExcutor for JwtVerifyOpts {
     async fn execute(self) -> anyhow::Result<()> {
-        process_jwt_verify(self.token)
+        let token_data = process_jwt_verify(&self.token);
+        println!("{:?}", token_data);
+        Ok(())
     }
 }
