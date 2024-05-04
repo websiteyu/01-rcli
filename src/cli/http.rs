@@ -24,7 +24,6 @@ pub struct HttpServeOpts {
 
 impl CmdExcutor for HttpServeOpts {
     async fn execute(self) -> anyhow::Result<()> {
-        process_http_serve(self.dir, self.port).await?;
-        Ok(())
+        process_http_serve(self.dir, self.port).await
     }
 }

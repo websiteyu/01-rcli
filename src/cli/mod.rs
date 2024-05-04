@@ -3,6 +3,7 @@ mod cha1305;
 mod csv;
 mod genpass;
 mod http;
+mod jwt;
 mod text;
 
 use clap::Parser;
@@ -15,6 +16,7 @@ pub use self::{
     csv::{CsvOpts, OutputFormat},
     genpass::GenPassOpts,
     http::{HttpServeOpts, HttpSubcommand},
+    jwt::{JwtSignOpts, JwtSubcommand, JwtVerifyOpts},
     text::{TextKeyGenerateOpts, TextSignFormat, TextSignOpts, TextSubcommand, TextVerifyOpts},
 };
 
@@ -40,6 +42,8 @@ pub enum SubCommand {
     Cha1305(Cha1305Subcommand),
     #[command(subcommand, about = "Http server")]
     Http(HttpSubcommand),
+    #[command(subcommand, about = "Jwt sign/verify")]
+    Jwt(JwtSubcommand),
 }
 
 pub fn verify_file(input: &str) -> Result<String, &'static str> {

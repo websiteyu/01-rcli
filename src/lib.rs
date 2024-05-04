@@ -8,8 +8,8 @@ mod utils;
 use anyhow::Result;
 
 pub use cli::{
-    Base64Subcommand, Cha1305Subcommand, HttpServeOpts, HttpSubcommand, Opts, SubCommand,
-    TextSignFormat, TextSubcommand,
+    Base64Subcommand, Cha1305Subcommand, HttpServeOpts, HttpSubcommand, JwtSignOpts, JwtSubcommand,
+    JwtVerifyOpts, Opts, SubCommand, TextSignFormat, TextSubcommand,
 };
 use enum_dispatch::enum_dispatch;
 pub use process::{
