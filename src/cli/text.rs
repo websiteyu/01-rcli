@@ -154,8 +154,6 @@ pub struct Cha1305DecryptOpt {
     pub input: String,
     #[arg(short, long, value_parser = verify_file)]
     pub key: String,
-    #[arg(short, long)]
-    pub nonce: String,
     #[arg(long, value_parser = parse_base64_format, default_value = "standard")]
     pub format: Base64Format,
 }
@@ -163,14 +161,14 @@ pub struct Cha1305DecryptOpt {
 impl CmdExcutor for Cha1305EncryptOpt {
     async fn execute(self) -> anyhow::Result<()> {
         let encrypted = process_encrypt(&self.input, &self.key, self.format)?;
-        println!("{:?}", encrypted);
+        println!("{}", encrypted);
         Ok(())
     }
 }
 
 impl CmdExcutor for Cha1305DecryptOpt {
     async fn execute(self) -> anyhow::Result<()> {
-        let decrypted = process_decrypt(&self.input, &self.key, &self.nonce, self.format)?;
+        let decrypted = process_decrypt(&self.input, &self.key, self.format)?;
         println!("{}", String::from_utf8(decrypted)?);
         Ok(())
     }
